@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHAF-2026 — Encuesta de Actividad Física</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1a7a4a;
+    --green-light: #e8f5ee;
+    --green-mid: #2ea86a;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --white: #ffffff;
+    --bg: #f4f7f4;
+    --error: #dc2626;
+    --card: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* HEADER BANNER */
+  .form-header {
+    background: linear-gradient(135deg, #0f5132 0%, #1a7a4a 50%, #2ea86a 100%);
+    color: white;
+    padding: 36px 24px 28px;
+    border-bottom: 6px solid #0d9458;
+    position: relative;
+    overflow: hidden;
+  }
+  .form-header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .form-header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -30px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .header-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(22px, 5vw, 32px);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .header-sub {
+    font-size: 14px;
+    opacity: 0.8;
+    line-height: 1.5;
+  }
+  .header-meta {
+    margin-top: 18px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-pill svg { width: 13px; height: 13px; opacity: 0.8; }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .progress-bar-container {
+    height: 4px;
+    background: #d1fae5;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--green-mid);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    padding: 6px 0 0;
+  }
+
+  /* MAIN CONTAINER */
+  .form-body {
+    max-width: 680px;
+    margin: 24px auto 0;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .card.active {
+    border-color: var(--green-mid);
+    box-shadow: 0 0 0 3px rgba(46,168,106,0.1), 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .card.error {
+    border-color: var(--error);
+  }
+
+  .q-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green-mid);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .q-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.45;
+    margin-bottom: 16px;
+  }
+  .q-required {
+    color: var(--error);
+    margin-left: 3px;
+  }
+  .error-msg {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 8px;
+    display: none;
+  }
+  .card.error .error-msg { display: block; }
+
+  /* INPUTS */
+  input[type="number"],
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input[type="number"]:focus,
+  input[type="text"]:focus,
+  select:focus {
+    border-color: var(--green-mid);
+    box-shadow: 0 0 0 3px rgba(46,168,106,0.12);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  /* RADIO / CHECKBOX */
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .option-item:hover {
+    border-color: var(--green-mid);
+    background: var(--green-light);
+  }
+  .option-item input[type="radio"],
+  .option-item input[type="checkbox"] {
+    width: 18px; height: 18px;
+    accent-color: var(--green);
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-appearance: auto;
+  }
+  .option-item span {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .option-item.selected {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+
+  /* SCALE */
+  .scale-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .scale-options {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .scale-btn {
+    flex: 1;
+    aspect-ratio: 1;
+    min-width: 44px;
+    max-width: 80px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .scale-btn:hover {
+    border-color: var(--green-mid);
+    color: var(--green);
+  }
+  .scale-btn.selected {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+
+  /* SUBMIT BUTTON */
+  .submit-area {
+    padding: 8px 0 0;
+  }
+  .btn-submit {
+    width: 100%;
+    padding: 15px 24px;
+    background: linear-gradient(135deg, #0f5132, #1a7a4a);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 14px rgba(26,122,74,0.35);
+  }
+  .btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(26,122,74,0.45);
+  }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* SUCCESS SCREEN */
+  #success-screen {
+    display: none;
+    max-width: 680px;
+    margin: 40px auto;
+    padding: 0 16px;
+  }
+  .success-card {
+    background: white;
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    border: 1px solid #d1fae5;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+  .success-icon {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #0f5132, #2ea86a);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .success-icon svg { width: 36px; height: 36px; color: white; }
+  .success-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .success-text {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 380px;
+    margin: 0 auto 28px;
+  }
+  .btn-new {
+    padding: 12px 28px;
+    background: var(--green-light);
+    color: var(--green);
+    border: 1.5px solid #a7f3d0;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-new:hover { background: #d1fae5; }
+
+  /* RESPONSES TABLE */
+  #responses-section {
+    max-width: 680px;
+    margin: 16px auto 0;
+    padding: 0 16px;
+    display: none;
+  }
+  .responses-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+  }
+  .responses-header {
+    background: var(--green-light);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #d1fae5;
+  }
+  .responses-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .responses-count {
+    background: var(--green);
+    color: white;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .responses-actions { display: flex; gap: 8px; align-items: center; }
+  .btn-export {
+    font-size: 12px;
+    color: var(--green);
+    background: white;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-export:hover { background: var(--green-light); }
+  .btn-clear {
+    font-size: 12px;
+    color: var(--error);
+    background: none;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .btn-clear:hover { background: #fef2f2; }
+  .responses-list { padding: 0; }
+  .response-entry {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13px;
+    animation: slideIn 0.3s ease;
+  }
+  .response-entry:last-child { border-bottom: none; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .response-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .response-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+  }
+  .response-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .r-key { font-size: 11px; color: var(--muted); }
+  .r-val { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  @media (max-width: 500px) {
+    .form-header { padding: 28px 16px 24px; }
+    .card { padding: 18px; }
+    .response-grid { grid-template-columns: 1fr; }
+    .scale-btn { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="form-header">
+  <div class="header-inner">
+    <div class="header-badge">Estadística I · UNIROMANA 2026</div>
+    <h1 class="header-title">Cuestionario de Hábitos de<br>Actividad Física</h1>
+    <p class="header-sub">Estudio realizado en Bayahíbe y Dominicus · CHAF-2026<br>Tus respuestas son anónimas y confidenciales.</p>
+    <div class="header-meta">
+      <div class="meta-pill">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        10 preguntas
+      </div>
+      <div class="meta-pill">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        ~3 minutos
+      </div>
+      <div class="meta-pill">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Anónimo
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+  <div class="progress-text" id="progressText">0 de 10 preguntas respondidas</div>
+</div>
+
+<!-- FORM -->
+<form id="survey-form" novalidate>
+  <div class="form-body">
+
+    <!-- Q1 — CONSENTIMIENTO -->
+    <div class="card" id="card-1" data-q="1" style="border-left: 4px solid #2ea86a;">
+      <div class="q-number">Pregunta 1 · Consentimiento</div>
+      <div class="q-label">¿Estás de acuerdo con que UNIROMANA utilice tus datos para esta encuesta? <span class="q-required">*</span></div>
+      <p style="font-size:12px;color:#6b7280;margin-bottom:14px;line-height:1.5;">Tus datos serán utilizados únicamente con fines académicos y de manera anónima, conforme a las consideraciones éticas del estudio CHAF-2026.</p>
+      <div class="options-list" id="q1-options">
+        <label class="option-item"><input type="radio" name="q1" value="Sí, acepto" /><span>Sí, acepto</span></label>
+        <label class="option-item"><input type="radio" name="q1" value="No acepto" /><span>No acepto</span></label>
+      </div>
+      <div class="error-msg">Debes responder esta pregunta para continuar.</div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="card" id="card-2" data-q="2">
+      <div class="q-number">Pregunta 2</div>
+      <div class="q-label">¿Cuál es tu edad? <span class="q-required">*</span></div>
+      <input type="number" id="q2-edad" name="q2" min="18" max="60" placeholder="Ej: 28" />
+      <div class="error-msg">Por favor ingresa tu edad (18–60 años).</div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="card" id="card-3" data-q="3">
+      <div class="q-number">Pregunta 3</div>
+      <div class="q-label">¿Cuántas veces a la semana realizas actividad física? <span class="q-required">*</span></div>
+      <div class="options-list" id="q3-options">
+        <label class="option-item"><input type="radio" name="q3" value="0" /><span>0 — No realizo actividad física</span></label>
+        <label class="option-item"><input type="radio" name="q3" value="1-2" /><span>1–2 veces</span></label>
+        <label class="option-item"><input type="radio" name="q3" value="3-4" /><span>3–4 veces</span></label>
+        <label class="option-item"><input type="radio" name="q3" value="5-6" /><span>5–6 veces</span></label>
+        <label class="option-item"><input type="radio" name="q3" value="Todos los días" /><span>Todos los días</span></label>
+      </div>
+      <div class="error-msg">Selecciona una opción.</div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="card" id="card-4" data-q="4">
+      <div class="q-number">Pregunta 4</div>
+      <div class="q-label">¿Qué tipo de actividad realizas con mayor frecuencia? <span class="q-required">*</span></div>
+      <div class="options-list" id="q4-options">
+        <label class="option-item"><input type="radio" name="q4" value="Caminar/Trotar" /><span>Caminar / Trotar</span></label>
+        <label class="option-item"><input type="radio" name="q4" value="Gimnasio/Pesas" /><span>Gimnasio / Pesas</span></label>
+        <label class="option-item"><input type="radio" name="q4" value="Deportes de equipo" /><span>Deportes de equipo (fútbol, béisbol, etc.)</span></label>
+        <label class="option-item"><input type="radio" name="q4" value="Natación/Playa" /><span>Natación / Actividades en playa</span></label>
+        <label class="option-item"><input type="radio" name="q4" value="Ciclismo" /><span>Ciclismo</span></label>
+        <label class="option-item"><input type="radio" name="q4" value="No realizo" /><span>No realizo actividad física</span></label>
+      </div>
+      <div class="error-msg">Selecciona el tipo de actividad principal.</div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="card" id="card-5" data-q="5">
+      <div class="q-number">Pregunta 5</div>
+      <div class="q-label">¿Cuántas horas a la semana dedicas al ejercicio? <span class="q-required">*</span></div>
+      <div class="options-list" id="q5-options">
+        <label class="option-item"><input type="radio" name="q5" value="0" /><span>0 horas</span></label>
+        <label class="option-item"><input type="radio" name="q5" value="Menos de 1 hora" /><span>Menos de 1 hora</span></label>
+        <label class="option-item"><input type="radio" name="q5" value="1-3 horas" /><span>1–3 horas</span></label>
+        <label class="option-item"><input type="radio" name="q5" value="4-6 horas" /><span>4–6 horas</span></label>
+        <label class="option-item"><input type="radio" name="q5" value="Más de 6 horas" /><span>Más de 6 horas</span></label>
+      </div>
+      <div class="error-msg">Selecciona una opción.</div>
+    </div>
+
+    <!-- Q6 — SCALE -->
+    <div class="card" id="card-6" data-q="6">
+      <div class="q-number">Pregunta 6</div>
+      <div class="q-label">En escala del 1 al 5, ¿qué tan activo te consideras físicamente? <span class="q-required">*</span></div>
+      <div class="scale-wrap">
+        <div class="scale-labels">
+          <span>1 · Muy sedentario</span>
+          <span>5 · Muy activo</span>
+        </div>
+        <div class="scale-options" id="q6-scale">
+          <button type="button" class="scale-btn" data-val="1">1</button>
+          <button type="button" class="scale-btn" data-val="2">2</button>
+          <button type="button" class="scale-btn" data-val="3">3</button>
+          <button type="button" class="scale-btn" data-val="4">4</button>
+          <button type="button" class="scale-btn" data-val="5">5</button>
+        </div>
+      </div>
+      <input type="hidden" id="q6" name="q6" />
+      <div class="error-msg">Selecciona un valor entre 1 y 5.</div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="card" id="card-7" data-q="7">
+      <div class="q-number">Pregunta 7</div>
+      <div class="q-label">¿Prefieres hacer ejercicio solo o acompañado? <span class="q-required">*</span></div>
+      <div class="options-list" id="q7-options">
+        <label class="option-item"><input type="radio" name="q7" value="Solo" /><span>Solo</span></label>
+        <label class="option-item"><input type="radio" name="q7" value="Acompañado" /><span>Acompañado</span></label>
+        <label class="option-item"><input type="radio" name="q7" value="Indiferente" /><span>Me es indiferente</span></label>
+      </div>
+      <div class="error-msg">Selecciona una opción.</div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="card" id="card-8" data-q="8">
+      <div class="q-number">Pregunta 8</div>
+      <div class="q-label">¿Tu trabajo implica actividad física? <span class="q-required">*</span></div>
+      <div class="options-list" id="q8-options">
+        <label class="option-item"><input type="radio" name="q8" value="Sí" /><span>Sí</span></label>
+        <label class="option-item"><input type="radio" name="q8" value="No" /><span>No</span></label>
+        <label class="option-item"><input type="radio" name="q8" value="A veces" /><span>A veces / depende del día</span></label>
+      </div>
+      <div class="error-msg">Selecciona una opción.</div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="card" id="card-9" data-q="9">
+      <div class="q-number">Pregunta 9</div>
+      <div class="q-label">¿Qué te impide hacer más ejercicio? <span class="q-required">*</span></div>
+      <div class="options-list" id="q9-options">
+        <label class="option-item"><input type="radio" name="q9" value="Falta de tiempo" /><span>Falta de tiempo</span></label>
+        <label class="option-item"><input type="radio" name="q9" value="Cansancio/estrés" /><span>Cansancio o estrés</span></label>
+        <label class="option-item"><input type="radio" name="q9" value="Falta de motivación" /><span>Falta de motivación</span></label>
+        <label class="option-item"><input type="radio" name="q9" value="Sin acceso a instalaciones" /><span>No tengo acceso a gimnasio o instalaciones</span></label>
+        <label class="option-item"><input type="radio" name="q9" value="Ningún obstáculo" /><span>Ningún obstáculo significativo</span></label>
+      </div>
+      <div class="error-msg">Selecciona una opción.</div>
+    </div>
+
+    <!-- Q10 — SCALE -->
+    <div class="card" id="card-10" data-q="10">
+      <div class="q-number">Pregunta 10</div>
+      <div class="q-label">¿Consideras importante la actividad física para tu salud? <span class="q-required">*</span></div>
+      <div class="scale-wrap">
+        <div class="scale-labels">
+          <span>1 · Nada importante</span>
+          <span>5 · Muy importante</span>
+        </div>
+        <div class="scale-options" id="q10-scale">
+          <button type="button" class="scale-btn" data-val="1">1</button>
+          <button type="button" class="scale-btn" data-val="2">2</button>
+          <button type="button" class="scale-btn" data-val="3">3</button>
+          <button type="button" class="scale-btn" data-val="4">4</button>
+          <button type="button" class="scale-btn" data-val="5">5</button>
+        </div>
+      </div>
+      <input type="hidden" id="q10" name="q10" />
+      <div class="error-msg">Selecciona un valor entre 1 y 5.</div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-area">
+      <button type="submit" class="btn-submit" id="submitBtn">Enviar respuestas →</button>
+    </div>
+
+  </div>
+</form>
+
+<!-- SUCCESS -->
+<div id="success-screen">
+  <div class="success-card">
+    <div class="success-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2 class="success-title">¡Gracias por participar!</h2>
+    <p class="success-text">Tus respuestas han sido registradas. Este estudio contribuye al análisis estadístico de los hábitos de salud en Bayahíbe y Dominicus.</p>
+    <button class="btn-new" onclick="resetForm()">Registrar otra respuesta</button>
+  </div>
+</div>
+
+<!-- RESPONSES -->
+<div id="responses-section">
+  <div class="responses-card">
+    <div class="responses-header">
+      <div class="responses-title">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Respuestas registradas
+        <span class="responses-count" id="responseCount">0</span>
+      </div>
+      <div class="responses-actions">
+        <button class="btn-export" onclick="exportToExcel()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Exportar Excel
+        </button>
+        <button class="btn-clear" onclick="clearResponses()">Limpiar todo</button>
+      </div>
+    </div>
+    <div class="responses-list" id="responsesList"></div>
+  </div>
+</div>
+
+<script>
+  // ── STATE ──
+  let responses = JSON.parse(localStorage.getItem('chaf2026') || '[]');
+  const TOTAL_Q = 10;
+
+  // ── PROGRESS ──
+  function updateProgress() {
+    let answered = 0;
+    if (document.querySelector('input[name="q1"]:checked')) answered++;
+    if (document.getElementById('q2-edad').value) answered++;
+    for (let q of ['q3','q4','q5','q7','q8','q9']) {
+      if (document.querySelector(`input[name="${q}"]:checked`)) answered++;
+    }
+    if (document.getElementById('q6').value) answered++;
+    if (document.getElementById('q10').value) answered++;
+    const pct = Math.round((answered / TOTAL_Q) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${answered} de ${TOTAL_Q} preguntas respondidas`;
+  }
+
+  // ── OPTION HIGHLIGHT ──
+  document.querySelectorAll('.option-item input').forEach(inp => {
+    inp.addEventListener('change', function() {
+      const group = this.closest('.options-list');
+      group.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
+      this.closest('.option-item').classList.add('selected');
+      const card = this.closest('.card');
+      card.classList.remove('error');
+      updateProgress();
+    });
+  });
+
+  // ── ACTIVE CARD ──
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('focusin', () => {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+    });
+  });
+
+  // ── SCALE ──
+  document.querySelectorAll('.scale-options').forEach(scaleEl => {
+    scaleEl.querySelectorAll('.scale-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const parent = this.closest('.card');
+        scaleEl.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        const hiddenId = parent.querySelector('input[type="hidden"]').id;
+        document.getElementById(hiddenId).value = this.dataset.val;
+        parent.classList.remove('error');
+        updateProgress();
+      });
+    });
+  });
+
+  // ── INPUT EVENTS ──
+  document.getElementById('q2-edad').addEventListener('input', () => {
+    document.getElementById('card-2').classList.remove('error');
+    updateProgress();
+  });
+
+  // ── VALIDATION ──
+  function validate() {
+    let valid = true;
+    // Q1 consentimiento
+    if (!document.querySelector('input[name="q1"]:checked')) {
+      document.getElementById('card-1').classList.add('error');
+      valid = false;
+    }
+    // Q2 edad
+    const age = parseInt(document.getElementById('q2-edad').value);
+    if (isNaN(age) || age < 18 || age > 60) {
+      document.getElementById('card-2').classList.add('error');
+      valid = false;
+    }
+    // Radio groups Q3–Q9
+    ['q3','q4','q5','q7','q8','q9'].forEach((q, i) => {
+      const cardNum = [3,4,5,7,8,9][i];
+      if (!document.querySelector(`input[name="${q}"]:checked`)) {
+        document.getElementById(`card-${cardNum}`).classList.add('error');
+        valid = false;
+      }
+    });
+    // Scales
+    if (!document.getElementById('q6').value) {
+      document.getElementById('card-6').classList.add('error');
+      valid = false;
+    }
+    if (!document.getElementById('q10').value) {
+      document.getElementById('card-10').classList.add('error');
+      valid = false;
+    }
+    return valid;
+  }
+
+  function getVal(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : '';
+  }
+
+  // ── GOOGLE SHEETS URL ──
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbysWB3POdgP-bpTmOsC43n07MIzjyzGiZiaH5x2WHbxXG_fWdAIWjD3qamPaEAJgA_bUQ/exec';
+
+  // ── SUBMIT ──
+  document.getElementById('survey-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!validate()) {
+      // Scroll to first error
+      const firstError = document.querySelector('.card.error');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const entry = {
+      id: responses.length + 1,
+      timestamp: new Date().toLocaleString('es-DO'),
+      consentimiento: getVal('q1'),
+      edad: document.getElementById('q2-edad').value,
+      frecuencia: getVal('q3'),
+      tipo_actividad: getVal('q4'),
+      horas_semana: getVal('q5'),
+      nivel_autopercibido: document.getElementById('q6').value,
+      preferencia: getVal('q7'),
+      trabajo_activo: getVal('q8'),
+      obstaculo: getVal('q9'),
+      importancia_salud: document.getElementById('q10').value
+    };
+
+    responses.push(entry);
+    localStorage.setItem('chaf2026', JSON.stringify(responses));
+
+    // Enviar a Google Sheets
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    })
+    .catch(() => {}) // no-cors no devuelve respuesta legible, es normal
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'Enviar respuestas →';
+      document.getElementById('survey-form').style.display = 'none';
+      document.getElementById('success-screen').style.display = 'block';
+      document.getElementById('success-screen').scrollIntoView({ behavior: 'smooth' });
+      renderResponses();
+    });
+  });
+
+  // ── RENDER RESPONSES ──
+  function renderResponses() {
+    const section = document.getElementById('responses-section');
+    const list = document.getElementById('responsesList');
+    document.getElementById('responseCount').textContent = responses.length;
+
+    if (responses.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = 'block';
+    list.innerHTML = '';
+    [...responses].reverse().forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'response-entry';
+      div.innerHTML = `
+        <div class="response-meta">#${r.id} · ${r.timestamp}</div>
+        <div class="response-grid">
+          <div class="response-item"><span class="r-key">Consentimiento</span><span class="r-val">${r.consentimiento}</span></div>
+          <div class="response-item"><span class="r-key">Edad</span><span class="r-val">${r.edad} años</span></div>
+          <div class="response-item"><span class="r-key">Frecuencia semanal</span><span class="r-val">${r.frecuencia}</span></div>
+          <div class="response-item"><span class="r-key">Tipo de actividad</span><span class="r-val">${r.tipo_actividad}</span></div>
+          <div class="response-item"><span class="r-key">Horas/semana</span><span class="r-val">${r.horas_semana}</span></div>
+          <div class="response-item"><span class="r-key">Nivel autopercibido</span><span class="r-val">${r.nivel_autopercibido}/5</span></div>
+          <div class="response-item"><span class="r-key">Preferencia</span><span class="r-val">${r.preferencia}</span></div>
+          <div class="response-item"><span class="r-key">Trabajo activo</span><span class="r-val">${r.trabajo_activo}</span></div>
+          <div class="response-item"><span class="r-key">Obstáculo principal</span><span class="r-val">${r.obstaculo}</span></div>
+          <div class="response-item"><span class="r-key">Importancia salud</span><span class="r-val">${r.importancia_salud}/5</span></div>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  // ── RESET ──
+  function resetForm() {
+    document.getElementById('survey-form').reset();
+    document.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
+    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('q6').value = '';
+    document.getElementById('q10').value = '';
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('error', 'active'));
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressText').textContent = '0 de 10 preguntas respondidas';
+    document.getElementById('success-screen').style.display = 'none';
+    document.getElementById('survey-form').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── CLEAR ──
+  function clearResponses() {
+    if (confirm('¿Eliminar todas las respuestas registradas?')) {
+      responses = [];
+      localStorage.removeItem('chaf2026');
+      renderResponses();
+    }
+  }
+
+  // ── EXPORT TO EXCEL ──
+  function exportToExcel() {
+    if (responses.length === 0) { alert('No hay respuestas para exportar.'); return; }
+
+    const headers = ['ID','Fecha/Hora','Consentimiento','Edad','Frecuencia_Semanal',
+      'Tipo_Actividad','Horas_Semana','Nivel_Autopercibido',
+      'Preferencia_Ejercicio','Trabajo_Activo','Obstaculo_Principal','Importancia_Salud'];
+
+    const rows = responses.map(r => [
+      r.id, r.timestamp, r.consentimiento, r.edad, r.frecuencia,
+      r.tipo_actividad, r.horas_semana, r.nivel_autopercibido,
+      r.preferencia, r.trabajo_activo, r.obstaculo, r.importancia_salud
+    ]);
+
+    // Build CSV with BOM for Excel Spanish compatibility
+    const bom = '\uFEFF';
+    const csv = bom + [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(','))
+      .join('\r\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CHAF-2026_Respuestas_${new Date().toLocaleDateString('es-DO').replace(/\//g,'-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── INIT ──
+  renderResponses();
+</script>
+</body>
+</html>
